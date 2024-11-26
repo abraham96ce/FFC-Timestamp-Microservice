@@ -18,13 +18,30 @@ app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
+// Función auxiliar para verificar si una fecha es inválida.
+// Convierte la fecha en formato UTC y compara con "Invalid Date".
+const isInvalideDate = (date) => date.toUTCString() === "Invalid Date"
 
 // your first API endpoint... 
-app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+// Define el primer endpoint de la API para manejar solicitudes a "/api/:date".
+app.get("/api/:date", function (req, res) {
+  let date = new Date(req.params.date) // Intenta crear un objeto Date usando el parámetro recibido.
+  if(isInvalideDate(date)){ // Si la fecha es inválida, intenta interpretar el parámetro como un número (marca de tiempo UNIX).
+    date = new Date(+req.params.date)
+  }
+  if(isInvalideDate(date)){ // Si aún es inválida después de ambos intentos, responde con un error.
+    res.json({error: "Invalid Date"})
+    return;  // Termina la ejecución para evitar enviar múltiples respuestas.
+  }
+   // Si la fecha es válida, responde con los formatos UNIX y UTC.
+  res.json({unix: date.getTime(), utc: date.toUTCString()});
 });
 
-
+// Endpoint secundario para devolver la fecha actual
+app.get("/api", (req, res) => {
+  // Obtiene la fecha actual y la convierte a ambos formatos.
+  res.json({unix: new Date().getTime(), utc: new Date().toUTCString()})
+})
 
 // Listen on port set in environment variable or default to 3000
 var listener = app.listen(process.env.PORT || 3000, function () {
